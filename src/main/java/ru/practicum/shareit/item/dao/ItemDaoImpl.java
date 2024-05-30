@@ -16,7 +16,7 @@ public class ItemDaoImpl implements ItemDao {
 
     private static final String TAG = "ITEM DAO";
 
-    Map<Long, Item> items = new HashMap<>();
+    private Map<Long, Item> items = new HashMap<>();
 
     private long idGenerator = 1;
 

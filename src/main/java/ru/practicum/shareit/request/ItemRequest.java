@@ -8,9 +8,6 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.util.Date;
 
-/**
- * TODO Sprint add-item-requests.
- */
 @Data
 public class ItemRequest {
     private Long id;

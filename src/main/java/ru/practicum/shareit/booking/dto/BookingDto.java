@@ -6,9 +6,6 @@ import ru.practicum.shareit.booking.StatusBooking;
 
 import java.util.Date;
 
-/**
- * TODO Sprint add-bookings.
- */
 @Data
 @AllArgsConstructor
 public class BookingDto {

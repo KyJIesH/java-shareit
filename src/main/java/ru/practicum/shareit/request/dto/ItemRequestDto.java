@@ -5,9 +5,6 @@ import lombok.Data;
 
 import java.util.Date;
 
-/**
- * TODO Sprint add-item-requests.
- */
 @Data
 @AllArgsConstructor
 public class ItemRequestDto {
