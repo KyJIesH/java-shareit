@@ -61,6 +61,6 @@ public class UserController {
     public ResponseEntity<String> deleteUser(@PathVariable Long id) {
         log.info("{} -  Пришел запрос на удаление пользователя по id {}", TAG, id);
         userService.deleteUser(id);
-        return new ResponseEntity<>(null, HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

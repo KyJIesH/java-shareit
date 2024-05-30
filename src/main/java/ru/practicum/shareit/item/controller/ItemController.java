@@ -79,6 +79,6 @@ public class ItemController {
         log.info("{} - Пришел запрос на удаление вещи по id {}", TAG, id);
         itemService.checkItemId(id);
         itemService.delete(id);
-        return new ResponseEntity<>(null, HttpStatus.NO_CONTENT);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
