@@ -4,6 +4,7 @@ import ru.practicum.shareit.user.model.User;
 
 import java.util.List;
 
+@Deprecated
 public interface UserDao {
 
     User create(User user);

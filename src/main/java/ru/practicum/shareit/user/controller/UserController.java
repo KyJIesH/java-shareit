@@ -23,8 +23,8 @@ public class UserController {
     @PostMapping
     public ResponseEntity<UserDto> createUser(@RequestBody @Valid UserDto userDto) {
         log.info("{} -  Пришел запрос на создание пользователя {}", TAG, userDto);
-        if (userService.findUserByEmail(userDto.getEmail()) == 1) {
-            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        if (userDto.getEmail() == null) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
         UserDto result = userService.createUser(userDto);
         if (result == null) {
@@ -47,7 +47,7 @@ public class UserController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<UserDto> updateUser(@RequestBody @Valid UserDto userDto,
-                                           @PathVariable Long id) {
+                                              @PathVariable Long id) {
         log.info("{} -  Пришел запрос на обновление пользователя {}", TAG, userDto);
         if (userService.findUserByEmail(userDto.getEmail()) == 1) {
             if (!userService.getUser(id).getEmail().equals(userDto.getEmail())) {

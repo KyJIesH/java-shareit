@@ -2,16 +2,24 @@ package ru.practicum.shareit.user.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.Email;
-import javax.validation.constraints.Size;
+import javax.persistence.*;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
+@Entity
+@Table(name = "users")
 public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
-    @Size(min = 1, max = 30, message = "Длина имени должна быть от 5 до 30 символов")
+
+    @Column(name = "name")
     private String name;
-    @Email(message = "Некорректный email")
+
+    @Column(name = "email", unique = true)
     private String email;
 }
