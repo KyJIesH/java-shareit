@@ -3,6 +3,7 @@ package ru.practicum.shareit.booking.service;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
@@ -33,6 +34,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingMapper bookingMapper;
 
     @Override
+    @Transactional
     public BookingDto createBooking(BookingDto bookingDto, Long userId) {
         log.info("{} - Обработка запроса на добавление бронирования", TAG);
         Item item = checkItem(bookingDto.getItemId());
@@ -57,6 +59,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional
     public BookingDto approvedBooking(Long userId, Long bookingId, Boolean approved) {
         log.info("{} - Обработка запроса на изменение статуса бронирования", TAG);
         checkUser(userId);
@@ -99,12 +102,7 @@ public class BookingServiceImpl implements BookingService {
             case "APPROVED":
             case "REJECTED":
             case "CANCELED":
-                StatusBooking status = null;
-                for (StatusBooking value : StatusBooking.values()) {
-                    if (value.name().equals(state)) {
-                        status = value;
-                    }
-                }
+                StatusBooking status = checkStatus(state);
                 bookings = bookingRepository.findAllByBookerIdAndStatusOrderByStartDesc(userId, status);
                 return bookingMapper.toBookingDto(bookings);
             case "PAST":
@@ -138,12 +136,7 @@ public class BookingServiceImpl implements BookingService {
             case "APPROVED":
             case "REJECTED":
             case "CANCELED":
-                StatusBooking status = null;
-                for (StatusBooking value : StatusBooking.values()) {
-                    if (value.name().equals(state)) {
-                        status = value;
-                    }
-                }
+                StatusBooking status = checkStatus(state);
                 bookings = bookingRepository.findAllByItemOwnerIdAndStatusOrderByStartDesc(userId, status);
                 return bookingMapper.toBookingDto(bookings);
             case "PAST":
@@ -173,5 +166,15 @@ public class BookingServiceImpl implements BookingService {
     private Booking checkBooking(Long bookingId) {
         return bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new NotFoundException("Бронирование не найдено"));
+    }
+
+    private StatusBooking checkStatus(String state) {
+        StatusBooking status = null;
+        for (StatusBooking value : StatusBooking.values()) {
+            if (value.name().equals(state)) {
+                status = value;
+            }
+        }
+        return status;
     }
 }

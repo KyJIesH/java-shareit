@@ -3,12 +3,13 @@ package ru.practicum.shareit.item.service;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
-import ru.practicum.shareit.item.comment.CommentRepository;
+import ru.practicum.shareit.item.comment.repository.CommentRepository;
 import ru.practicum.shareit.item.comment.dto.CommentDto;
 import ru.practicum.shareit.item.comment.mapper.CommentMapper;
 import ru.practicum.shareit.item.comment.model.Comment;
@@ -39,6 +40,7 @@ public class ItemServiceImpl implements ItemService {
     private final BookingMapper bookingMapper;
 
     @Override
+    @Transactional
     public ItemDto create(ItemDto itemDto, Long userId) {
         log.info("{} - Обработка запроса на добавление вещи", TAG);
         Item item = itemMapper.toItem(itemDto);
@@ -51,6 +53,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    @Transactional
     public CommentDto createComment(CommentDto commentDto, Long itemId, Long userId) {
         log.info("{} - Обработка запроса на создание отзыва {} о вещи", TAG, commentDto);
         Long bookingsCount = bookingRepository.countAllByItemIdAndBookerIdAndEndBefore(itemId, userId, LocalDateTime.now());
@@ -91,6 +94,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    @Transactional
     public ItemDto update(ItemDto itemDto, Long id, Long userId) {
         log.info("{} - Обработка запроса на обновление вещи {}", TAG, itemDto);
         Item item = itemMapper.toItem(itemDto);

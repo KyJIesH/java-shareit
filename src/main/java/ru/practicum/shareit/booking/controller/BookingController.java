@@ -7,8 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.service.BookingService;
-import ru.practicum.shareit.booking.utils.ErrorMessage;
-import ru.practicum.shareit.exception.ValidationException;
 
 import java.util.List;
 
@@ -45,7 +43,7 @@ public class BookingController {
     }
 
     @GetMapping
-    public ResponseEntity<List<BookingDto>> getAllByUser(@RequestParam(required = false, defaultValue = "ALL") String state,
+    public ResponseEntity<List<BookingDto>> getAllByUser(@RequestParam(defaultValue = "ALL") String state,
                                                          @RequestHeader("X-Sharer-User-Id") Long userId) {
         log.info("{} - Пришел запрос на получение списка всех бронирований со статусом {} " +
                 "пользователя с id {}", TAG, state, userId);
@@ -53,16 +51,10 @@ public class BookingController {
     }
 
     @GetMapping("/owner")
-    public ResponseEntity<List<BookingDto>> getAllForOwner(@RequestParam(required = false, defaultValue = "ALL") String state,
+    public ResponseEntity<List<BookingDto>> getAllForOwner(@RequestParam(defaultValue = "ALL") String state,
                                                            @RequestHeader("X-Sharer-User-Id") Long owner) {
         log.info("{} - Пришел запрос на получение списка бронирований со статусом {} " +
                 "для вещей пользователя с id {}", TAG, state, owner);
         return new ResponseEntity<>(bookingService.getAllByOwner(owner, state), HttpStatus.OK);
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorMessage handleException(ValidationException e) {
-        return new ErrorMessage(e.getMessage());
     }
 }

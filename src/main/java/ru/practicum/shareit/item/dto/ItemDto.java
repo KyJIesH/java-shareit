@@ -1,7 +1,6 @@
 package ru.practicum.shareit.item.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.*;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.item.comment.dto.CommentDto;
 import ru.practicum.shareit.item.validation.ValidationItem;
@@ -13,7 +12,8 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.util.List;
 
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 public class ItemDto {
     private Long id;

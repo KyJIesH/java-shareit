@@ -6,13 +6,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.shareit.booking.utils.ErrorMessage;
 import ru.practicum.shareit.item.comment.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.item.validation.ValidationItem;
 
-import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import java.util.List;
@@ -92,11 +90,5 @@ public class ItemController {
         itemService.checkItemId(id);
         itemService.delete(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorMessage handleException(ConstraintViolationException e) {
-        return new ErrorMessage(e.getMessage());
     }
 }

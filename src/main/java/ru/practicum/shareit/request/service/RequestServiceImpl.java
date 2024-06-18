@@ -3,6 +3,7 @@ package ru.practicum.shareit.request.service;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.mapper.RequestMapper;
@@ -21,6 +22,7 @@ public class RequestServiceImpl implements RequestService {
     private final RequestMapper requestMapper;
 
     @Override
+    @Transactional
     public ItemRequestDto createItemRequest(ItemRequestDto itemRequestDto) {
         log.info("{} - Обработка запроса на добавление потребности {}", TAG, itemRequestDto);
         ItemRequest itemRequest = requestMapper.toItemRequest(itemRequestDto);
@@ -42,6 +44,7 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
+    @Transactional
     public ItemRequestDto updateItemRequest(ItemRequestDto itemRequestDto, Long id) {
         log.info("{} - Обработка запроса на обновление потребности {}", TAG, itemRequestDto);
         ItemRequest itemRequest = requestRepository.findById(id)
