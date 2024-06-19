@@ -12,6 +12,7 @@ import java.util.Map;
 
 @Slf4j
 @Component
+@Deprecated
 public class ItemDaoImpl implements ItemDao {
 
     private static final String TAG = "ITEM DAO";

@@ -3,10 +3,12 @@ package ru.practicum.shareit.user.service;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.user.dao.UserDao;
+import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.util.List;
 
@@ -16,57 +18,58 @@ import java.util.List;
 public class UserServiceImpl implements UserService {
 
     private static final String TAG = "USER SERVICE";
-    private final UserDao userDao;
+    private final UserRepository userRepository;
     private final UserMapper userMapper;
 
     @Override
+    @Transactional
     public UserDto createUser(UserDto userDto) {
-        log.info("{} - Обработка запроса на добавление пользователя", TAG);
+        log.info("{} - Обработка запроса на добавление пользователя {}", TAG, userDto);
         User user = userMapper.toUser(userDto);
-        if (user.getName() == null || user.getName().isEmpty()) {
-            return null;
-        }
-        if (user.getEmail() == null || user.getEmail().isEmpty() || findUserByEmail(user.getEmail()) == 1) {
-            return null;
-        }
-        return userMapper.toUserDto(userDao.create(user));
+        return userMapper.toUserDto(userRepository.save(user));
     }
 
     @Override
     public UserDto getUser(Long id) {
         log.info("{} - Обработка запроса на получение пользователя по id {}", TAG, id);
-        return userMapper.toUserDto(userDao.getUser(id));
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
+        return userMapper.toUserDto(user);
     }
 
     @Override
     public List<UserDto> getAllUsers() {
         log.info("{} - Обработка запроса на получение всех пользователей", TAG);
-        return userMapper.toUsersDto(userDao.getAllUsers());
+        return userMapper.toUsersDto(userRepository.findAll());
     }
 
     @Override
+    @Transactional
     public UserDto updateUser(UserDto userDto, Long id) {
         log.info("{} - Обработка запроса на обновление пользователя {}", TAG, userDto);
-        User user = userMapper.toUser(userDto);
-        User updatedUser = userDao.getUser(id);
-        if (user.getName() != null && !user.getName().isBlank() && !user.getName().equals(updatedUser.getName())) {
-            updatedUser.setName(user.getName());
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
+        if (userDto.getName() != null && !userDto.getName().isBlank()) {
+            user.setName(userDto.getName());
         }
-        if (user.getEmail() != null && !user.getEmail().isBlank() && !user.getEmail().equals(updatedUser.getEmail())) {
-            updatedUser.setEmail(user.getEmail());
+        if (userDto.getEmail() != null && !userDto.getEmail().isBlank()) {
+            user.setEmail(userDto.getEmail());
         }
-        return userMapper.toUserDto(userDao.update(updatedUser, id));
+        user.setId(id);
+        return userMapper.toUserDto(userRepository.save(user));
     }
 
     @Override
     public void deleteUser(Long id) {
         log.info("{} - Обработка запроса на удаление пользователя по id {}", TAG, id);
-        userDao.delete(id);
+        userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
+        userRepository.deleteById(id);
     }
 
     @Override
     public int findUserByEmail(String email) {
-        for (User exp : userDao.getAllUsers()) {
+        for (User exp : userRepository.findAll()) {
             if (exp.getEmail().equals(email)) {
                 return 1;
             }
