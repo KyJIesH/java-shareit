@@ -2,21 +2,23 @@ package ru.practicum.shareit.item.service;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
-import ru.practicum.shareit.item.comment.repository.CommentRepository;
 import ru.practicum.shareit.item.comment.dto.CommentDto;
 import ru.practicum.shareit.item.comment.mapper.CommentMapper;
 import ru.practicum.shareit.item.comment.model.Comment;
+import ru.practicum.shareit.item.comment.repository.CommentRepository;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.request.repository.RequestRepository;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
@@ -37,7 +39,7 @@ public class ItemServiceImpl implements ItemService {
     private final CommentRepository commentRepository;
     private final ItemMapper itemMapper;
     private final CommentMapper commentMapper;
-    private final BookingMapper bookingMapper;
+    private final RequestRepository requestRepository;
 
     @Override
     @Transactional
@@ -48,6 +50,10 @@ public class ItemServiceImpl implements ItemService {
         item.setOwner(owner);
         if (item.getDescription() == null || item.getDescription().isBlank()) {
             return null;
+        }
+        if (itemDto.getRequestId() != null) {
+            item.setRequest(requestRepository.findById(itemDto.getRequestId())
+                    .orElseThrow(() -> new NotFoundException("Потребность отсутствует")));
         }
         return itemMapper.toItemDto(itemRepository.save(item));
     }
@@ -82,13 +88,13 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<ItemDto> getAllItemsByUserId(Long id) {
+    public List<ItemDto> getAllItemsByUserId(Long id, Pageable pageable) {
         log.info("{} - Обработка получения всех вещей пользователя с id {}", TAG, id);
         checkUser(id);
-        List<Item> items = itemRepository.findAllByOwnerIdOrderByIdAsc(id);
+        Page<Item> items = itemRepository.findAllByOwnerIdOrderByIdAsc(id, pageable);
         List<ItemDto> result = new ArrayList<>();
-        for (int i = 0; i < items.size(); i++) {
-            result.add(getItem(id, items.get(i).getId()));
+        for (Item item : items) {
+            result.add(getItem(id, item.getId()));
         }
         return result;
     }
@@ -136,13 +142,13 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<ItemDto> searchByText(String text, Long userId) {
+    public List<ItemDto> searchByText(String text, Long userId, Pageable pageable) {
         log.info("{} - Обработка запроса на поиск вещи по переданному тексту {}", TAG, text);
         if (text == null || text.isBlank()) {
             return new ArrayList<>();
         }
-        List<Item> result = itemRepository.search(text);
-        return itemMapper.toItemsDto(result);
+        Page<Item> result = itemRepository.search(text, pageable);
+        return itemMapper.toItemsDto(result.toList());
     }
 
     @Override

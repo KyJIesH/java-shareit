@@ -1,13 +1,16 @@
 package ru.practicum.shareit.request.model;
 
-import lombok.*;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
 import javax.persistence.*;
-import javax.validation.constraints.FutureOrPresent;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -18,20 +21,20 @@ import java.util.Date;
 public class ItemRequest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
-    @NotBlank(message = "Описание не может быть пустым")
-    @Size(min = 15, max = 500, message = "Длина описания должна быть от 15 до 500 символов")
     @Column(name = "description")
     private String description;
 
-    @NotBlank(message = "Пользователь, который создаёт запрос должен существовать")
     @ManyToOne
-    @JoinColumn(name = "requestor_id", referencedColumnName = "id")
-    private User requestor;
+    @JoinColumn(name = "requester_id", referencedColumnName = "id")
+    private User requester;
 
-    @NotBlank
-    @FutureOrPresent(message = "Значение должно быть настоящим временем либо будущим")
     @Column(name = "creation_date")
-    private Date created;
+    private LocalDateTime created;
+
+    @OneToMany(mappedBy = "request", cascade = CascadeType.ALL)
+    @JsonManagedReference
+    private List<Item> items;
 }

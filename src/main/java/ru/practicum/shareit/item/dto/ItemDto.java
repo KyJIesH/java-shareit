@@ -26,6 +26,7 @@ public class ItemDto {
     private User owner;
     @NotNull(message = "Статус не может быть пустым", groups = {ValidationItem.Create.class})
     private Boolean available;
+    private Long requestId;
     private ItemRequest request;
     private BookingDto lastBooking;
     private BookingDto nextBooking;

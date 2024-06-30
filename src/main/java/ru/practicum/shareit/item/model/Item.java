@@ -1,5 +1,6 @@
 package ru.practicum.shareit.item.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.*;
 import ru.practicum.shareit.item.validation.ValidationItem;
 import ru.practicum.shareit.request.model.ItemRequest;
@@ -41,6 +42,7 @@ public class Item {
     private Boolean available;
 
     @ManyToOne
-    @JoinColumn(name = "request_id", referencedColumnName = "id")
+    @JoinColumn(name = "request_id")
+    @JsonBackReference
     private ItemRequest request;
 }

@@ -1,4 +1,4 @@
-package ru.practicum.shareit.booking.utils;
+package ru.practicum.shareit.utils;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
