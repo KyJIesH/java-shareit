@@ -18,8 +18,6 @@ public interface ItemService {
 
     ItemDto update(ItemDto itemDto, Long id, Long userId);
 
-    List<ItemDto> searchByName(String text, Long userId);
-
     List<ItemDto> searchByText(String text, Long userId, Pageable pageable);
 
     void delete(Long id);

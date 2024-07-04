@@ -126,22 +126,6 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<ItemDto> searchByName(String text, Long userId) {
-        log.info("{} - Обработка запроса на поиск вещи по названию {}", TAG, text);
-        if (text == null || text.isBlank()) {
-            return new ArrayList<>();
-        }
-        List<Item> result = new ArrayList<>();
-        for (Item item : itemRepository.findAll()) {
-            if (item.getAvailable() && (item.getName().toLowerCase().contains(text)
-                    || item.getDescription().toLowerCase().contains(text))) {
-                result.add(item);
-            }
-        }
-        return itemMapper.toItemsDto(result);
-    }
-
-    @Override
     public List<ItemDto> searchByText(String text, Long userId, Pageable pageable) {
         log.info("{} - Обработка запроса на поиск вещи по переданному тексту {}", TAG, text);
         if (text == null || text.isBlank()) {

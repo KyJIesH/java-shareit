@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
-import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.mapper.RequestMapper;
 import ru.practicum.shareit.request.model.ItemRequest;
@@ -25,7 +24,6 @@ public class RequestServiceImpl implements RequestService {
 
     private static final String TAG = "REQUEST SERVICE";
     private final RequestRepository requestRepository;
-    private final ItemRepository itemRepository;
     private final RequestMapper requestMapper;
     private final UserRepository userRepository;
 
@@ -34,7 +32,7 @@ public class RequestServiceImpl implements RequestService {
     public ItemRequestDto createItemRequest(Long userId, ItemRequestDto itemRequestDto) {
         log.info("{} - Обработка запроса на добавление потребности {} пользователем {}", TAG, itemRequestDto, userId);
         if (itemRequestDto.getDescription() == null || itemRequestDto.getDescription().isBlank()) {
-            throw new ValidationException("описание не может быть пустым");
+            throw new ValidationException("Описание не может быть пустым");
         }
         User user = checkUser(userId);
         ItemRequest itemRequest = requestMapper.toItemRequest(itemRequestDto);
