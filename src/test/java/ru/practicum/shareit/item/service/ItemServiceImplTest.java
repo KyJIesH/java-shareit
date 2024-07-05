@@ -8,6 +8,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
+import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.booking.model.StatusBooking;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
@@ -57,11 +59,14 @@ class ItemServiceImplTest {
     private final Pageable pageable = PageRequest.of(0, 5, Sort.by("start").descending());
     private Item item;
     private User user;
+    private User booker;
     private User requester;
     private Comment comment;
     private ItemRequest itemRequest;
     private ItemDto itemDto;
     private CommentDto commentDto;
+    private Booking booking;
+    private List<Booking> bookings;
 
     @BeforeEach
     void setUp() {
@@ -72,6 +77,11 @@ class ItemServiceImplTest {
         user.setId(1L);
         user.setName("userName");
         user.setEmail("mailUser@mail.com");
+
+        booker = new User();
+        booker.setId(2L);
+        booker.setName("bookerName");
+        booker.setEmail("mailBooker@mail.com");
 
         requester = new User();
         requester.setId(2L);
@@ -120,6 +130,17 @@ class ItemServiceImplTest {
                 new BookingDto(),
                 new ArrayList<>()
         );
+
+        booking = new Booking();
+        booking.setId(1L);
+        booking.setStart(LocalDateTime.now().plusHours(1));
+        booking.setEnd(LocalDateTime.now().plusHours(2));
+        booking.setItem(item);
+        booking.setBooker(booker);
+        booking.setStatus(StatusBooking.WAITING);
+
+        bookings = new ArrayList<>();
+        bookings.add(booking);
     }
 
     @Test
@@ -277,6 +298,13 @@ class ItemServiceImplTest {
         Page<Item> exp = new PageImpl<>(items, pageable, items.size());
 
         when(itemRepository.findAllByOwnerIdOrderByIdAsc(anyLong(), any())).thenReturn(exp);
+
+        List<Long> ids = new ArrayList<>();
+        for (Item item : exp) {
+            ids.add(item.getId());
+        }
+
+        when(bookingRepository.findByItemIdInAndStatusNot(any(), any())).thenReturn(bookings);
 
         itemService.getAllItemsByUserId(user.getId(), pageable);
 
