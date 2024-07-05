@@ -290,6 +290,80 @@ class ItemServiceImplTest {
     }
 
     @Test
+    void getAllItemsByUserIdTestIncorrectLast() {
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
+        List<Item> items = new ArrayList<>();
+        items.add(item);
+        Page<Item> exp = new PageImpl<>(items, pageable, items.size());
+
+        when(itemRepository.findAllByOwnerIdOrderByIdAsc(anyLong(), any())).thenReturn(exp);
+
+        List<Long> ids = new ArrayList<>();
+        for (Item item : exp) {
+            ids.add(item.getId());
+        }
+
+        when(bookingRepository.findByItemIdInAndStatusNot(any(), any())).thenReturn(bookings);
+
+        Booking lastBooking = new Booking();
+        lastBooking.setId(2L);
+        lastBooking.setStart(LocalDateTime.now().plusMinutes(10));
+        lastBooking.setEnd(LocalDateTime.now().plusHours(1).plusMinutes(30));
+        lastBooking.setItem(item);
+        lastBooking.setBooker(booker);
+        lastBooking.setStatus(StatusBooking.WAITING);
+
+        assertEquals(1L, bookings.get(0).getItem().getId());
+        assertTrue(lastBooking.getStart().isBefore(bookings.get(0).getStart()));
+        assertNotEquals(StatusBooking.APPROVED, lastBooking.getStatus());
+        assertEquals(StatusBooking.WAITING, bookings.get(0).getStatus());
+        assertTrue(bookings.get(0).getEnd().isAfter(lastBooking.getEnd()));
+
+        itemService.getAllItemsByUserId(user.getId(), pageable);
+
+        verify(userRepository, times(1)).findById(anyLong());
+        verify(itemRepository, times(1)).findAllByOwnerIdOrderByIdAsc(anyLong(), any());
+        verify(bookingRepository, times(1)).findByItemIdInAndStatusNot(any(), any());
+    }
+
+    @Test
+    void getAllItemsByUserIdTestIncorrectNext() {
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
+        List<Item> items = new ArrayList<>();
+        items.add(item);
+        Page<Item> exp = new PageImpl<>(items, pageable, items.size());
+
+        when(itemRepository.findAllByOwnerIdOrderByIdAsc(anyLong(), any())).thenReturn(exp);
+
+        List<Long> ids = new ArrayList<>();
+        for (Item item : exp) {
+            ids.add(item.getId());
+        }
+
+        when(bookingRepository.findByItemIdInAndStatusNot(any(), any())).thenReturn(bookings);
+
+        Booking nextBooking = new Booking();
+        nextBooking.setId(3L);
+        nextBooking.setStart(LocalDateTime.now().plusHours(1).plusMinutes(10));
+        nextBooking.setEnd(LocalDateTime.now().plusHours(2).plusMinutes(30));
+        nextBooking.setItem(item);
+        nextBooking.setBooker(booker);
+        nextBooking.setStatus(StatusBooking.WAITING);
+
+        assertEquals(1L, bookings.get(0).getItem().getId());
+        assertTrue(nextBooking.getStart().isAfter(LocalDateTime.now()));
+        assertNotEquals(StatusBooking.APPROVED, nextBooking.getStatus());
+        assertEquals(StatusBooking.WAITING, bookings.get(0).getStatus());
+        assertTrue(bookings.get(0).getStart().isBefore(nextBooking.getStart()));
+
+        itemService.getAllItemsByUserId(user.getId(), pageable);
+
+        verify(userRepository, times(1)).findById(anyLong());
+        verify(itemRepository, times(1)).findAllByOwnerIdOrderByIdAsc(anyLong(), any());
+        verify(bookingRepository, times(1)).findByItemIdInAndStatusNot(any(), any());
+    }
+
+    @Test
     void getAllItemsByUserIdTestCorrect() {
         when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
 
@@ -340,9 +414,17 @@ class ItemServiceImplTest {
         when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
 
         assertNotEquals(null, item.getId());
+        assertEquals(1L, item.getId());
+
         assertNotEquals(null, item.getName());
+        assertEquals("itemName", item.getName());
+
         assertNotEquals(null, item.getDescription());
+        assertEquals("itemDescription", item.getDescription());
+
         assertNotEquals(null, item.getAvailable());
+        assertEquals(true, item.getAvailable());
+
         assertEquals(item.getOwner().getId(), user.getId());
 
         when(itemRepository.save(any(Item.class))).thenReturn(item);
