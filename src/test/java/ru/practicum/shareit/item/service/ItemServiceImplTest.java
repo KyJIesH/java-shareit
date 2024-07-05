@@ -290,7 +290,7 @@ class ItemServiceImplTest {
     }
 
     @Test
-    void getAllItemsByUserIdTestIncorrectLast() {
+    void getAllItemsByUserIdTestIncorrectLast() throws NoSuchMethodException {
         when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
         List<Item> items = new ArrayList<>();
         items.add(item);
@@ -298,26 +298,22 @@ class ItemServiceImplTest {
 
         when(itemRepository.findAllByOwnerIdOrderByIdAsc(anyLong(), any())).thenReturn(exp);
 
-        List<Long> ids = new ArrayList<>();
-        for (Item item : exp) {
-            ids.add(item.getId());
-        }
-
-        when(bookingRepository.findByItemIdInAndStatusNot(any(), any())).thenReturn(bookings);
-
         Booking lastBooking = new Booking();
         lastBooking.setId(2L);
         lastBooking.setStart(LocalDateTime.now().plusMinutes(10));
         lastBooking.setEnd(LocalDateTime.now().plusHours(1).plusMinutes(30));
         lastBooking.setItem(item);
         lastBooking.setBooker(booker);
-        lastBooking.setStatus(StatusBooking.WAITING);
+        lastBooking.setStatus(StatusBooking.APPROVED);
+        bookings.add(lastBooking);
+
+        when(bookingRepository.findByItemIdInAndStatusNot(any(), any())).thenReturn(bookings);
 
         assertEquals(1L, bookings.get(0).getItem().getId());
-        assertTrue(lastBooking.getStart().isBefore(bookings.get(0).getStart()));
-        assertNotEquals(StatusBooking.APPROVED, lastBooking.getStatus());
-        assertEquals(StatusBooking.WAITING, bookings.get(0).getStatus());
-        assertTrue(bookings.get(0).getEnd().isAfter(lastBooking.getEnd()));
+        assertEquals(1L, bookings.get(1).getItem().getId());
+        assertTrue(bookings.get(1).getStart().isBefore(bookings.get(0).getStart()));
+        assertEquals(StatusBooking.APPROVED, lastBooking.getStatus());
+        assertTrue(bookings.get(0).getEnd().isAfter(bookings.get(1).getEnd()));
 
         itemService.getAllItemsByUserId(user.getId(), pageable);
 
@@ -335,26 +331,33 @@ class ItemServiceImplTest {
 
         when(itemRepository.findAllByOwnerIdOrderByIdAsc(anyLong(), any())).thenReturn(exp);
 
-        List<Long> ids = new ArrayList<>();
-        for (Item item : exp) {
-            ids.add(item.getId());
-        }
+        Booking bookingTest = new Booking();
+        bookingTest.setId(3L);
+        bookingTest.setStart(LocalDateTime.now().minusHours(2));
+        bookingTest.setEnd(LocalDateTime.now().minusHours(1));
+        bookingTest.setItem(item);
+        bookingTest.setBooker(booker);
+        bookingTest.setStatus(StatusBooking.WAITING);
 
-        when(bookingRepository.findByItemIdInAndStatusNot(any(), any())).thenReturn(bookings);
+        List<Booking> bookingsTest = new ArrayList<>();
+        bookingsTest.add(bookingTest);
 
         Booking nextBooking = new Booking();
-        nextBooking.setId(3L);
+        nextBooking.setId(4L);
         nextBooking.setStart(LocalDateTime.now().plusHours(1).plusMinutes(10));
         nextBooking.setEnd(LocalDateTime.now().plusHours(2).plusMinutes(30));
         nextBooking.setItem(item);
         nextBooking.setBooker(booker);
-        nextBooking.setStatus(StatusBooking.WAITING);
+        nextBooking.setStatus(StatusBooking.APPROVED);
+        bookingsTest.add(nextBooking);
 
-        assertEquals(1L, bookings.get(0).getItem().getId());
-        assertTrue(nextBooking.getStart().isAfter(LocalDateTime.now()));
-        assertNotEquals(StatusBooking.APPROVED, nextBooking.getStatus());
-        assertEquals(StatusBooking.WAITING, bookings.get(0).getStatus());
-        assertTrue(bookings.get(0).getStart().isBefore(nextBooking.getStart()));
+        when(bookingRepository.findByItemIdInAndStatusNot(any(), any())).thenReturn(bookingsTest);
+
+        assertEquals(1L, bookingsTest.get(0).getItem().getId());
+        assertEquals(1L, bookingsTest.get(1).getItem().getId());
+        assertTrue(bookingsTest.get(1).getStart().isAfter(bookingsTest.get(0).getStart()));
+        assertNotEquals("APPROVED", bookingsTest.get(1).getStatus());
+        assertTrue(bookingsTest.get(1).getEnd().isAfter(bookingsTest.get(0).getEnd()));
 
         itemService.getAllItemsByUserId(user.getId(), pageable);
 
