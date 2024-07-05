@@ -11,6 +11,8 @@ import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.utils.CheckPage;
 
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @RestController
@@ -48,8 +50,8 @@ public class BookingController {
 
     @GetMapping
     public ResponseEntity<List<BookingDto>> getAllByUser(@RequestParam(defaultValue = "ALL") String state,
-                                                         @RequestParam(required = false, defaultValue = "0") int from,
-                                                         @RequestParam(required = false, defaultValue = "10") int size,
+                                                         @PositiveOrZero @RequestParam(defaultValue = "0") int from,
+                                                         @Positive @RequestParam(defaultValue = "10") int size,
                                                          @RequestHeader("X-Sharer-User-Id") Long userId) {
         log.info("{} - Пришел запрос на получение списка всех бронирований со статусом {} " +
                 "пользователя с id {}", TAG, state, userId);
@@ -60,8 +62,8 @@ public class BookingController {
 
     @GetMapping("/owner")
     public ResponseEntity<List<BookingDto>> getAllForOwner(@RequestParam(defaultValue = "ALL") String state,
-                                                           @RequestParam(required = false, defaultValue = "0") int from,
-                                                           @RequestParam(required = false, defaultValue = "10") int size,
+                                                           @PositiveOrZero @RequestParam(defaultValue = "0") int from,
+                                                           @Positive @RequestParam(defaultValue = "10") int size,
                                                            @RequestHeader("X-Sharer-User-Id") Long owner) {
         log.info("{} - Пришел запрос на получение списка бронирований со статусом {} " +
                 "для вещей пользователя с id {}", TAG, state, owner);

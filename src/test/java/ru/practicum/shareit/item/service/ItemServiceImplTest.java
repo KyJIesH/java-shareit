@@ -271,7 +271,6 @@ class ItemServiceImplTest {
     @Test
     void getAllItemsByUserIdTestCorrect() {
         when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
-        when(itemRepository.findById(anyLong())).thenReturn(Optional.of(item));
 
         List<Item> items = new ArrayList<>();
         items.add(item);
@@ -281,9 +280,9 @@ class ItemServiceImplTest {
 
         itemService.getAllItemsByUserId(user.getId(), pageable);
 
-        verify(userRepository, times(2)).findById(anyLong());
-        verify(itemRepository, times(1)).findById(anyLong());
+        verify(userRepository, times(1)).findById(anyLong());
         verify(itemRepository, times(1)).findAllByOwnerIdOrderByIdAsc(anyLong(), any());
+        verify(bookingRepository, times(1)).findByItemIdInAndStatusNot(any(), any());
     }
 
     @Test

@@ -12,6 +12,8 @@ import ru.practicum.shareit.utils.CheckPage;
 import ru.practicum.shareit.utils.SortPage;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @RestController
@@ -37,8 +39,8 @@ public class ItemRequestController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ItemRequestDto>> getItemRequestsUserSorted(@RequestParam(required = false, defaultValue = "0") int from,
-                                                                          @RequestParam(required = false, defaultValue = "10") int size,
+    public ResponseEntity<List<ItemRequestDto>> getItemRequestsUserSorted(@PositiveOrZero @RequestParam(defaultValue = "0") int from,
+                                                                          @Positive @RequestParam(defaultValue = "10") int size,
                                                                           @RequestHeader("X-Sharer-User-Id") Long userId) {
         log.info("{} - Пришел запрос на получение списка всех потребностей пользователя {}", TAG, userId);
         checkPage.checkPage(from, size);
@@ -47,8 +49,8 @@ public class ItemRequestController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<ItemRequestDto>> getAllItemRequestsSorted(@RequestParam(required = false, defaultValue = "0") int from,
-                                                                         @RequestParam(required = false, defaultValue = "10") int size,
+    public ResponseEntity<List<ItemRequestDto>> getAllItemRequestsSorted(@PositiveOrZero @RequestParam(defaultValue = "0") int from,
+                                                                         @Positive @RequestParam(defaultValue = "10") int size,
                                                                          @RequestHeader("X-Sharer-User-Id") Long userId) {
         log.info("{} - Пришел запрос пользователя {} на получение списка всех потребностей остальных пользователей", TAG, userId);
         checkPage.checkPage(from, size);

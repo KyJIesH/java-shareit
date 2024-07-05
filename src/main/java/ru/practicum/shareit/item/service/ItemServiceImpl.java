@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.booking.model.StatusBooking;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
@@ -93,8 +94,22 @@ public class ItemServiceImpl implements ItemService {
         checkUser(id);
         Page<Item> items = itemRepository.findAllByOwnerIdOrderByIdAsc(id, pageable);
         List<ItemDto> result = new ArrayList<>();
-        for (Item item : items) {
-            result.add(getItem(id, item.getId()));
+
+        List<Item> itemList = items.getContent();
+
+        List<Long> ids = new ArrayList<>();
+        for (Item item : itemList) {
+            ids.add(item.getId());
+        }
+
+        List<Booking> bookings = bookingRepository.findByItemIdInAndStatusNot(ids, StatusBooking.REJECTED);
+
+        for (Item item : itemList) {
+            Booking last = getLastBookingForGetItems(bookings, LocalDateTime.now(), item.getId());
+            Booking next = getNextBookingForGetItems(bookings, LocalDateTime.now(), item.getId());
+            List<Comment> comments = commentRepository.getAllByItemId(item.getId());
+            List<CommentDto> commentsDto = commentMapper.toCommentsDto(comments);
+            result.add(itemMapper.toItemDto(item, last, next, commentsDto));
         }
         return result;
     }
@@ -173,5 +188,52 @@ public class ItemServiceImpl implements ItemService {
             return null;
         }
         return temp.get(0);
+    }
+
+    private Booking getLastBookingForGetItems(List<Booking> bookings, LocalDateTime now, Long itemId) {
+        if (bookings.isEmpty()) {
+            return null;
+        }
+        Booking result = null;
+        for (Booking booking : bookings) {
+            if (!booking.getItem().getId().equals(itemId)) {
+                continue;
+            }
+            if (booking.getStart().isBefore(now)) {
+                if (result == null &&
+                        ((booking.getStatus().equals(StatusBooking.APPROVED)))) {
+                    result = booking;
+                } else if (result == null) {
+                    result = booking;
+                } else if (booking.getEnd().isAfter(result.getEnd())) {
+                    result = booking;
+                }
+            }
+        }
+        return result;
+    }
+
+    private Booking getNextBookingForGetItems(List<Booking> bookings, LocalDateTime now, Long itemId) {
+        if (bookings.isEmpty()) {
+            return null;
+        }
+        Booking result = null;
+        for (Booking booking : bookings) {
+            if (!booking.getItem().getId().equals(itemId)) {
+                continue;
+            }
+            if (booking.getStart().isAfter(now)) {
+                if (result == null &&
+                        ((booking.getStatus().equals(StatusBooking.APPROVED)) ||
+                                (booking.getStatus().equals(StatusBooking.WAITING)))) {
+                    result = booking;
+                } else if (result == null) {
+                    result = booking;
+                } else if (booking.getStart().isBefore(result.getStart())) {
+                    result = booking;
+                }
+            }
+        }
+        return result;
     }
 }

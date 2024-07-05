@@ -60,4 +60,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             "b.start > ?3 and b.status != 'REJECTED' " +
             "order by b.start asc")
     List<Booking> findFutureOwnerBookings(Long itemId, Long ownerId, LocalDateTime now);
+
+    //Метод для getItems
+    List<Booking> findByItemIdInAndStatusNot(List<Long> itemIds, StatusBooking status);
 }

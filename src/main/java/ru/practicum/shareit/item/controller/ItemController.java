@@ -16,6 +16,8 @@ import ru.practicum.shareit.utils.CheckPage;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @RestController
@@ -31,7 +33,7 @@ public class ItemController {
 
     @PostMapping
     public ResponseEntity<ItemDto> createItem(@RequestBody @Validated(ValidationItem.Create.class) ItemDto itemDto,
-                                              @RequestHeader(value = "X-Sharer-User-Id", required = false) Long userId) {
+                                              @RequestHeader(value = "X-Sharer-User-Id") Long userId) {
         log.info("{} - Пришел запрос на добавление вещи {}", TAG, itemDto);
         if (userId == null) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -60,8 +62,8 @@ public class ItemController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ItemDto>> getAllItemsByUserId(@RequestParam(required = false, defaultValue = "0") int from,
-                                                             @RequestParam(required = false, defaultValue = "10") int size,
+    public ResponseEntity<List<ItemDto>> getAllItemsByUserId(@RequestParam(defaultValue = "0") int from,
+                                                             @RequestParam(defaultValue = "10") int size,
                                                              @RequestHeader(value = "X-Sharer-User-Id") Long userId) {
         log.info("{} - Пришел запрос на получение всех вещей", TAG);
         checkPage.checkPage(from, size);
@@ -72,7 +74,7 @@ public class ItemController {
     @PatchMapping("/{id}")
     public ResponseEntity<ItemDto> update(@RequestBody @Valid ItemDto itemDto,
                                           @PathVariable Long id,
-                                          @RequestHeader(value = "X-Sharer-User-Id", required = false) Long userId) {
+                                          @RequestHeader(value = "X-Sharer-User-Id") Long userId) {
         log.info("{} - Пришел запрос на обновление вещи {}", TAG, itemDto);
         if (userId == null) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -86,9 +88,9 @@ public class ItemController {
 
     @GetMapping("/search")
     public ResponseEntity<List<ItemDto>> searchByText(@RequestParam @NotBlank String text,
-                                                      @RequestParam(required = false, defaultValue = "0") int from,
-                                                      @RequestParam(required = false, defaultValue = "10") int size,
-                                                      @RequestHeader(value = "X-Sharer-User-Id", required = false) Long userId) {
+                                                      @PositiveOrZero @RequestParam(defaultValue = "0") int from,
+                                                      @Positive @RequestParam(defaultValue = "10") int size,
+                                                      @RequestHeader(value = "X-Sharer-User-Id") Long userId) {
         log.info("{} - Пришел запрос на поиск вещей по названию {}", TAG, text);
         checkPage.checkPage(from, size);
         Pageable pageable = PageRequest.of(from / size, size);

@@ -16,6 +16,7 @@ import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -36,6 +37,7 @@ class BookingRepositoryTest {
     private User booker;
     private User owner;
     private Item item;
+    private List<Long> itemsIds;
 
     @BeforeEach
     public void setUp() {
@@ -51,6 +53,9 @@ class BookingRepositoryTest {
         item.setAvailable(true);
         item.setRequest(null);
         itemRepository.save(item);
+
+        itemsIds = new ArrayList<>();
+        itemsIds.add(item.getId());
 
         booker = new User();
         booker.setName("bookerName");
@@ -182,6 +187,12 @@ class BookingRepositoryTest {
     void testFindFutureOwnerBookings() {
         List<Booking> bookings = bookingRepository.findFutureOwnerBookings(item.getId(), owner.getId(), LocalDateTime.now());
         assertEquals(1, bookings.size());
+    }
+
+    @Test
+    void findByItemIdInAndStatusNot() {
+        List<Booking> bookings = bookingRepository.findByItemIdInAndStatusNot(itemsIds, StatusBooking.REJECTED);
+        assertEquals(4, bookings.size());
     }
 
     @AfterEach
