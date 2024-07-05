@@ -2,6 +2,9 @@ package ru.practicum.shareit.booking.service;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingDto;
@@ -89,30 +92,31 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDto> getAllByBooker(Long userId, String state) {
+    public List<BookingDto> getAllByBooker(Long userId, String state, Pageable pageable) {
         log.info("{} - Обработка запроса на получение списка всех бронирований со статусом {} " +
                 "пользователя с id {}", TAG, state, userId);
         checkUser(userId);
+        Pageable page = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("start").descending());
         List<Booking> bookings = new ArrayList<>();
         switch (state.toUpperCase()) {
             case "ALL":
-                bookings = bookingRepository.findAllByBookerIdOrderByStartDesc(userId);
+                bookings = bookingRepository.findAllByBookerIdOrderByStartDesc(userId, page);
                 return bookingMapper.toBookingDto(bookings);
             case "WAITING":
             case "APPROVED":
             case "REJECTED":
             case "CANCELED":
                 StatusBooking status = checkStatus(state);
-                bookings = bookingRepository.findAllByBookerIdAndStatusOrderByStartDesc(userId, status);
+                bookings = bookingRepository.findAllByBookerIdAndStatusOrderByStartDesc(userId, status, page);
                 return bookingMapper.toBookingDto(bookings);
             case "PAST":
-                bookings = bookingRepository.findAllByBookerIdAndEndBeforeOrderByStartDesc(userId, LocalDateTime.now());
+                bookings = bookingRepository.findAllByBookerIdAndEndBeforeOrderByStartDesc(userId, LocalDateTime.now(), page);
                 return bookingMapper.toBookingDto(bookings);
             case "FUTURE":
-                bookings = bookingRepository.findAllByBookerIdAndStartAfterOrderByStartDesc(userId, LocalDateTime.now());
+                bookings = bookingRepository.findAllByBookerIdAndStartAfterOrderByStartDesc(userId, LocalDateTime.now(), page);
                 return bookingMapper.toBookingDto(bookings);
             case "CURRENT":
-                bookings = bookingRepository.findCurrentBookerBookings(userId, LocalDateTime.now());
+                bookings = bookingRepository.findCurrentBookerBookings(userId, LocalDateTime.now(), page);
                 return bookingMapper.toBookingDto(bookings);
             default:
                 throw new ValidationException("Unknown state: UNSUPPORTED_STATUS");
@@ -120,33 +124,34 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDto> getAllByOwner(Long userId, String state) {
+    public List<BookingDto> getAllByOwner(Long userId, String state, Pageable pageable) {
         log.info("{} - Обработка запроса на получение списка бронирований со статусом {} " +
                 "для вещей пользователя с id {}", TAG, state, userId);
         checkUser(userId);
+        Pageable page = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("start").descending());
         if (itemRepository.findAllByOwnerIdOrderByIdAsc(userId).isEmpty()) {
             throw new ValidationException("У пользователя с id " + userId + " нет вещей");
         }
         List<Booking> bookings;
         switch (state) {
             case "ALL":
-                bookings = bookingRepository.findAllByItemOwnerIdOrderByStartDesc(userId);
+                bookings = bookingRepository.findAllByItemOwnerIdOrderByStartDesc(userId, page);
                 return bookingMapper.toBookingDto(bookings);
             case "WAITING":
             case "APPROVED":
             case "REJECTED":
             case "CANCELED":
                 StatusBooking status = checkStatus(state);
-                bookings = bookingRepository.findAllByItemOwnerIdAndStatusOrderByStartDesc(userId, status);
+                bookings = bookingRepository.findAllByItemOwnerIdAndStatusOrderByStartDesc(userId, status, page);
                 return bookingMapper.toBookingDto(bookings);
             case "PAST":
-                bookings = bookingRepository.findAllByItemOwnerIdAndEndBeforeOrderByStartDesc(userId, LocalDateTime.now());
+                bookings = bookingRepository.findAllByItemOwnerIdAndEndBeforeOrderByStartDesc(userId, LocalDateTime.now(), page);
                 return bookingMapper.toBookingDto(bookings);
             case "FUTURE":
-                bookings = bookingRepository.findAllByItemOwnerIdAndStartAfterOrderByStartDesc(userId, LocalDateTime.now());
+                bookings = bookingRepository.findAllByItemOwnerIdAndStartAfterOrderByStartDesc(userId, LocalDateTime.now(), page);
                 return bookingMapper.toBookingDto(bookings);
             case "CURRENT":
-                bookings = bookingRepository.findCurrentOwnerBookings(userId, LocalDateTime.now());
+                bookings = bookingRepository.findCurrentOwnerBookings(userId, LocalDateTime.now(), page);
                 return bookingMapper.toBookingDto(bookings);
             default:
                 throw new ValidationException("Unknown state: UNSUPPORTED_STATUS");

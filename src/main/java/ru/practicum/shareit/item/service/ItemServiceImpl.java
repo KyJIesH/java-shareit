@@ -2,21 +2,24 @@ package ru.practicum.shareit.item.service;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.booking.model.StatusBooking;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
-import ru.practicum.shareit.item.comment.repository.CommentRepository;
 import ru.practicum.shareit.item.comment.dto.CommentDto;
 import ru.practicum.shareit.item.comment.mapper.CommentMapper;
 import ru.practicum.shareit.item.comment.model.Comment;
+import ru.practicum.shareit.item.comment.repository.CommentRepository;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.request.repository.RequestRepository;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
@@ -37,7 +40,7 @@ public class ItemServiceImpl implements ItemService {
     private final CommentRepository commentRepository;
     private final ItemMapper itemMapper;
     private final CommentMapper commentMapper;
-    private final BookingMapper bookingMapper;
+    private final RequestRepository requestRepository;
 
     @Override
     @Transactional
@@ -48,6 +51,10 @@ public class ItemServiceImpl implements ItemService {
         item.setOwner(owner);
         if (item.getDescription() == null || item.getDescription().isBlank()) {
             return null;
+        }
+        if (itemDto.getRequestId() != null) {
+            item.setRequest(requestRepository.findById(itemDto.getRequestId())
+                    .orElseThrow(() -> new NotFoundException("Потребность отсутствует")));
         }
         return itemMapper.toItemDto(itemRepository.save(item));
     }
@@ -82,13 +89,27 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<ItemDto> getAllItemsByUserId(Long id) {
+    public List<ItemDto> getAllItemsByUserId(Long id, Pageable pageable) {
         log.info("{} - Обработка получения всех вещей пользователя с id {}", TAG, id);
         checkUser(id);
-        List<Item> items = itemRepository.findAllByOwnerIdOrderByIdAsc(id);
+        Page<Item> items = itemRepository.findAllByOwnerIdOrderByIdAsc(id, pageable);
         List<ItemDto> result = new ArrayList<>();
-        for (int i = 0; i < items.size(); i++) {
-            result.add(getItem(id, items.get(i).getId()));
+
+        List<Item> itemList = items.getContent();
+
+        List<Long> ids = new ArrayList<>();
+        for (Item item : itemList) {
+            ids.add(item.getId());
+        }
+
+        List<Booking> bookings = bookingRepository.findByItemIdInAndStatusNot(ids, StatusBooking.REJECTED);
+
+        for (Item item : itemList) {
+            Booking last = getLastBookingForGetItems(bookings, LocalDateTime.now(), item.getId());
+            Booking next = getNextBookingForGetItems(bookings, LocalDateTime.now(), item.getId());
+            List<Comment> comments = commentRepository.getAllByItemId(item.getId());
+            List<CommentDto> commentsDto = commentMapper.toCommentsDto(comments);
+            result.add(itemMapper.toItemDto(item, last, next, commentsDto));
         }
         return result;
     }
@@ -120,29 +141,13 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<ItemDto> searchByName(String text, Long userId) {
-        log.info("{} - Обработка запроса на поиск вещи по названию {}", TAG, text);
-        if (text == null || text.isBlank()) {
-            return new ArrayList<>();
-        }
-        List<Item> result = new ArrayList<>();
-        for (Item item : itemRepository.findAll()) {
-            if (item.getAvailable() && (item.getName().toLowerCase().contains(text)
-                    || item.getDescription().toLowerCase().contains(text))) {
-                result.add(item);
-            }
-        }
-        return itemMapper.toItemsDto(result);
-    }
-
-    @Override
-    public List<ItemDto> searchByText(String text, Long userId) {
+    public List<ItemDto> searchByText(String text, Long userId, Pageable pageable) {
         log.info("{} - Обработка запроса на поиск вещи по переданному тексту {}", TAG, text);
         if (text == null || text.isBlank()) {
             return new ArrayList<>();
         }
-        List<Item> result = itemRepository.search(text);
-        return itemMapper.toItemsDto(result);
+        Page<Item> result = itemRepository.search(text, pageable);
+        return itemMapper.toItemsDto(result.toList());
     }
 
     @Override
@@ -183,5 +188,52 @@ public class ItemServiceImpl implements ItemService {
             return null;
         }
         return temp.get(0);
+    }
+
+    private Booking getLastBookingForGetItems(List<Booking> bookings, LocalDateTime now, Long itemId) {
+        if (bookings.isEmpty()) {
+            return null;
+        }
+        Booking result = null;
+        for (Booking booking : bookings) {
+            if (!booking.getItem().getId().equals(itemId)) {
+                continue;
+            }
+            if (booking.getStart().isBefore(now)) {
+                if (result == null &&
+                        ((booking.getStatus().equals(StatusBooking.APPROVED)))) {
+                    result = booking;
+                } else if (result == null) {
+                    result = booking;
+                } else if (booking.getEnd().isAfter(result.getEnd())) {
+                    result = booking;
+                }
+            }
+        }
+        return result;
+    }
+
+    private Booking getNextBookingForGetItems(List<Booking> bookings, LocalDateTime now, Long itemId) {
+        if (bookings.isEmpty()) {
+            return null;
+        }
+        Booking result = null;
+        for (Booking booking : bookings) {
+            if (!booking.getItem().getId().equals(itemId)) {
+                continue;
+            }
+            if (booking.getStart().isAfter(now)) {
+                if (result == null &&
+                        ((booking.getStatus().equals(StatusBooking.APPROVED)) ||
+                                (booking.getStatus().equals(StatusBooking.WAITING)))) {
+                    result = booking;
+                } else if (result == null) {
+                    result = booking;
+                } else if (booking.getStart().isBefore(result.getStart())) {
+                    result = booking;
+                }
+            }
+        }
+        return result;
     }
 }

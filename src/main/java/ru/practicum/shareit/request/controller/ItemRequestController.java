@@ -2,13 +2,18 @@ package ru.practicum.shareit.request.controller;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.service.RequestService;
+import ru.practicum.shareit.utils.CheckPage;
+import ru.practicum.shareit.utils.SortPage;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @RestController
@@ -19,40 +24,44 @@ public class ItemRequestController {
 
     private static final String TAG = "REQUEST CONTROLLER";
     private final RequestService requestService;
+    private final CheckPage checkPage;
+    private final SortPage sortPage;
 
     @PostMapping
-    public ResponseEntity<ItemRequestDto> createItemRequest(@RequestBody @Valid ItemRequestDto itemRequestDto) {
-        log.info("{} -  Пришел запрос на создание потребности {}", TAG, itemRequestDto);
-        ItemRequestDto result = requestService.createItemRequest(itemRequestDto);
+    public ResponseEntity<ItemRequestDto> createItemRequest(@RequestBody @Valid ItemRequestDto itemRequestDto,
+                                                            @RequestHeader("X-Sharer-User-Id") Long userId) {
+        log.info("{} -  Пришел запрос на создание потребности {} от пользователя {}", TAG, itemRequestDto, userId);
+        ItemRequestDto result = requestService.createItemRequest(userId, itemRequestDto);
         if (result == null) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ItemRequestDto> getItemRequest(@PathVariable Long id) {
-        log.info("{} -  Пришел запрос на получение потребности по id {}", TAG, id);
-        return new ResponseEntity<>(requestService.getItemRequest(id), HttpStatus.OK);
-    }
-
     @GetMapping
-    public ResponseEntity<List<ItemRequestDto>> getAllItemRequests() {
-        log.info("{} - Пришел запрос на получение списка всех потребностей", TAG);
-        return new ResponseEntity<>(requestService.getAllItemRequests(), HttpStatus.OK);
+    public ResponseEntity<List<ItemRequestDto>> getItemRequestsUserSorted(@PositiveOrZero @RequestParam(defaultValue = "0") int from,
+                                                                          @Positive @RequestParam(defaultValue = "10") int size,
+                                                                          @RequestHeader("X-Sharer-User-Id") Long userId) {
+        log.info("{} - Пришел запрос на получение списка всех потребностей пользователя {}", TAG, userId);
+        checkPage.checkPage(from, size);
+        PageRequest pageRequest = sortPage.sortPageRequest(from, size);
+        return new ResponseEntity<>(requestService.getItemRequestsUserSorted(userId, pageRequest), HttpStatus.OK);
     }
 
-    @PatchMapping("/{id}")
-    public ResponseEntity<ItemRequestDto> updateItemRequest(@RequestBody @Valid ItemRequestDto itemRequestDto,
-                                              @PathVariable Long id) {
-        log.info("{} -  Пришел запрос на обновление потребности {}", TAG, itemRequestDto);
-        return new ResponseEntity<>(requestService.updateItemRequest(itemRequestDto, id), HttpStatus.OK);
+    @GetMapping("/all")
+    public ResponseEntity<List<ItemRequestDto>> getAllItemRequestsSorted(@PositiveOrZero @RequestParam(defaultValue = "0") int from,
+                                                                         @Positive @RequestParam(defaultValue = "10") int size,
+                                                                         @RequestHeader("X-Sharer-User-Id") Long userId) {
+        log.info("{} - Пришел запрос пользователя {} на получение списка всех потребностей остальных пользователей", TAG, userId);
+        checkPage.checkPage(from, size);
+        PageRequest pageRequest = sortPage.sortPageRequest(from, size);
+        return new ResponseEntity<>(requestService.getAllItemRequestsSorted(userId, pageRequest), HttpStatus.OK);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteItemRequest(@PathVariable Long id) {
-        log.info("{} -  Пришел запрос на удаление потребности по id {}", TAG, id);
-        requestService.deleteItemRequest(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    @GetMapping("/{requestId}")
+    public ResponseEntity<ItemRequestDto> getItemRequest(@PathVariable Long requestId,
+                                                         @RequestHeader("X-Sharer-User-Id") Long userId) {
+        log.info("{} -  Пришел запрос на получение пользователем {} потребности по id {}", TAG, userId, requestId);
+        return new ResponseEntity<>(requestService.getItemRequest(requestId, userId), HttpStatus.OK);
     }
 }

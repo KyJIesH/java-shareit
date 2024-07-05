@@ -2,12 +2,17 @@ package ru.practicum.shareit.booking.controller;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.service.BookingService;
+import ru.practicum.shareit.utils.CheckPage;
 
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @RestController
@@ -19,6 +24,7 @@ public class BookingController {
     private static final String TAG = "BOOKING CONTROLLER";
 
     private final BookingService bookingService;
+    private final CheckPage checkPage;
 
     @PostMapping
     public ResponseEntity<BookingDto> save(@RequestBody BookingDto bookingDto,
@@ -44,17 +50,25 @@ public class BookingController {
 
     @GetMapping
     public ResponseEntity<List<BookingDto>> getAllByUser(@RequestParam(defaultValue = "ALL") String state,
+                                                         @PositiveOrZero @RequestParam(defaultValue = "0") int from,
+                                                         @Positive @RequestParam(defaultValue = "10") int size,
                                                          @RequestHeader("X-Sharer-User-Id") Long userId) {
         log.info("{} - Пришел запрос на получение списка всех бронирований со статусом {} " +
                 "пользователя с id {}", TAG, state, userId);
-        return new ResponseEntity<>(bookingService.getAllByBooker(userId, state), HttpStatus.OK);
+        checkPage.checkPage(from, size);
+        Pageable pageable = PageRequest.of(from / size, size);
+        return new ResponseEntity<>(bookingService.getAllByBooker(userId, state, pageable), HttpStatus.OK);
     }
 
     @GetMapping("/owner")
     public ResponseEntity<List<BookingDto>> getAllForOwner(@RequestParam(defaultValue = "ALL") String state,
+                                                           @PositiveOrZero @RequestParam(defaultValue = "0") int from,
+                                                           @Positive @RequestParam(defaultValue = "10") int size,
                                                            @RequestHeader("X-Sharer-User-Id") Long owner) {
         log.info("{} - Пришел запрос на получение списка бронирований со статусом {} " +
                 "для вещей пользователя с id {}", TAG, state, owner);
-        return new ResponseEntity<>(bookingService.getAllByOwner(owner, state), HttpStatus.OK);
+        checkPage.checkPage(from, size);
+        Pageable pageable = PageRequest.of(from / size, size);
+        return new ResponseEntity<>(bookingService.getAllByOwner(owner, state, pageable), HttpStatus.OK);
     }
 }

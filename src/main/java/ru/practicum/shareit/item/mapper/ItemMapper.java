@@ -35,6 +35,7 @@ public class ItemMapper {
                 item.getDescription(),
                 item.getOwner(),
                 item.getAvailable(),
+                item.getRequest() != null ? item.getRequest().getId() : null,
                 item.getRequest(),
                 null,
                 null,
@@ -49,6 +50,7 @@ public class ItemMapper {
                 item.getDescription(),
                 item.getOwner(),
                 item.getAvailable(),
+                item.getRequest() != null ? item.getRequest().getId() : null,
                 item.getRequest(),
                 bookingMapper.toBookingDto(last),
                 bookingMapper.toBookingDto(next),
@@ -62,5 +64,15 @@ public class ItemMapper {
             itemsDto.add(toItemDto(item));
         }
         return itemsDto;
+    }
+
+    public List<Item> toItems(List<ItemDto> items) {
+        List<Item> itemList = new ArrayList<>();
+        if (items != null) {
+            for (ItemDto itemDto : items) {
+                itemList.add(toItem(itemDto));
+            }
+        }
+        return itemList;
     }
 }
