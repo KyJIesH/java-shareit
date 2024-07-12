@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.NumberFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.user.UserClient;
@@ -13,7 +14,7 @@ import ru.practicum.shareit.validation.ValidationUpdate;
 
 import javax.validation.constraints.NotNull;
 
-@RestController
+@Controller
 @RequestMapping("users")
 @Slf4j
 @AllArgsConstructor
@@ -25,7 +26,7 @@ public class UserController {
     private final UserClient userClient;
 
     @PostMapping
-    ResponseEntity<Object> createUser(@RequestBody @Validated(ValidationCreate.class) UserDto userDto) {
+    public ResponseEntity<Object> createUser(@RequestBody @Validated(ValidationCreate.class) UserDto userDto) {
         log.info("{} -  Пришел запрос на создание пользователя {}", TAG, userDto);
         return userClient.createUser(userDto);
     }
@@ -37,7 +38,7 @@ public class UserController {
     }
 
     @GetMapping
-    ResponseEntity<Object> getAllUsers() {
+    public ResponseEntity<Object> getAllUsers() {
         log.info("{} - Пришел запрос на получение списка всех пользователей", TAG);
         return userClient.getAllUsers();
     }

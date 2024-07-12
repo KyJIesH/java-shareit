@@ -14,11 +14,11 @@ import javax.validation.constraints.Size;
 @RequiredArgsConstructor
 @AllArgsConstructor
 public class UserDto {
-    Long id;
+    private Long id;
     @NotBlank(groups = {ValidationCreate.class}, message = "Имя не может быть пустым")
     @Size(min = 1, max = 30, message = "Длина имени должна быть от 1 до 30 символов")
-    String name;
+    private String name;
     @NotBlank(groups = {ValidationCreate.class}, message = "Email не может быть пустым")
     @Email(groups = {ValidationCreate.class, ValidationUpdate.class}, message = "Некорректный email")
-    String email;
+    private String email;
 }
