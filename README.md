@@ -11,6 +11,8 @@
 * gateway - валидация входящих в запрос данных
 * server - обработка запроса и возвращение ответа
 
+## Схема базы данных
+![](https://github.com/KyJIesH/java-shareit/blob/main/server/src/main/resources/schema.png?raw=true)
 
 ## Взаимодействие с приложением происходит по API.
 ### Методы для работы с `пользователями`:
